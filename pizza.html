@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIZZA POSTO | Authentic Neapolitan</title>
+    
+    <!-- Fonts: Prata (Serif) for headings, DM Sans for UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;400;500;700&family=Prata&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP for High-End Motion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'posto-black': '#0a0a0a',
+                        'posto-dark': '#121212',
+                        'posto-charcoal': '#1f1f1f',
+                        'posto-red': '#D63428',
+                        'posto-orange': '#E86A33',
+                        'posto-cream': '#F2E9E4',
+                    },
+                    fontFamily: {
+                        serif: ['Prata', 'serif'],
+                        sans: ['DM Sans', 'sans-serif'],
+                    },
+                    backgroundImage: {
+                        'noise': "url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%220.05%22/%3E%3C/svg%3E')",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles & Utilities */
+        body {
+            background-color: #0a0a0a;
+            color: #F2E9E4;
+            overflow-x: hidden;
+            cursor: default; /* We will use a custom blend mode cursor */
+        }
+
+        /* Hide Scrollbar but allow scroll */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #D63428;
+        }
+
+        /* Typography Utilities */
+        .text-outline {
+            -webkit-text-stroke: 1px rgba(242, 233, 228, 0.2);
+            color: transparent;
+            transition: all 0.5s ease;
+        }
+        .text-outline:hover {
+            -webkit-text-stroke: 1px #D63428;
+            color: transparent; 
+        }
+
+        /* Loader */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* Magnetic Button Effect Wrapper */
+        .btn-magnetic {
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* Image Reveal Mask */
+        .reveal-mask {
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+        .reveal-mask.active {
+            clip-path: inset(0 0 0 0);
+        }
+
+        /* Noise Overlay */
+        .noise-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            background-image: url('data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22 opacity=%220.07%22/%3E%3C/svg%3E');
+        }
+
+        /* Custom Cursor Follower */
+        .cursor-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #D63428;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: difference;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+        
+        .card-3d-wrapper {
+            perspective: 1000px;
+        }
+        .card-3d {
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+        
+        /* Floating Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-posto-red selection:text-white">
+
+    <!-- Loader -->
+    <div class="loader-overlay" id="loader">
+        <div class="overflow-hidden">
+            <h1 class="text-6xl md:text-9xl font-serif text-posto-cream loader-text translate-y-full">PIZZA</h1>
+        </div>
+        <div class="overflow-hidden">
+            <h1 class="text-6xl md:text-9xl font-serif text-posto-red loader-text translate-y-full">POSTO</h1>
+        </div>
+        <div class="mt-4 h-1 w-0 bg-posto-cream loader-line"></div>
+    </div>
+
+    <!-- Noise Texture Overlay -->
+    <div class="noise-layer"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot hidden md:block"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 px-6 py-6 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="#" class="font-serif text-2xl font-bold tracking-tighter mix-blend-difference z-50 relative group">
+                PIZZA POSTO<span class="text-posto-red">.</span>
+                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-posto-red transition-all group-hover:w-full"></span>
+            </a>
+
+            <div class="hidden md:flex items-center gap-8 mix-blend-difference text-posto-cream/80 font-sans text-sm tracking-widest uppercase">
+                <a href="#menu" class="hover:text-posto-red transition-colors nav-link">Menu</a>
+                <a href="#story" class="hover:text-posto-red transition-colors nav-link">Our Story</a>
+                <a href="#gallery" class="hover:text-posto-red transition-colors nav-link">Gallery</a>
+            </div>
+
+            <button onclick="document.getElementById('reservations').scrollIntoView({behavior: 'smooth'})" class="btn-magnetic group relative px-6 py-3 bg-posto-cream text-posto-black font-bold uppercase text-xs tracking-widest overflow-hidden rounded-full">
+                <span class="relative z-10 group-hover:text-posto-cream transition-colors duration-300">Book Table</span>
+                <div class="absolute inset-0 bg-posto-red transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out"></div>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Button (Hamburger) - Simplified for this demo -->
+    <div class="fixed bottom-6 right-6 md:hidden z-50">
+        <button class="bg-posto-red text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform">
+            <i data-lucide="menu"></i>
+        </button>
+    </div>
+
+    <main>
+        <!-- HERO SECTION -->
+        <section class="relative h-screen w-full flex items-center justify-center overflow-hidden">
+            
+            <!-- Canvas for Embers/Fire Effect -->
+            <canvas id="fireCanvas" class="absolute inset-0 w-full h-full object-cover opacity-60"></canvas>
+            
+            <!-- Background Image with Parallax -->
+            <div class="absolute inset-0 w-full h-full z-[-1]">
+                <div class="absolute inset-0 bg-gradient-to-t from-posto-black via-posto-black/50 to-transparent z-10"></div>
+                <!-- High Quality Dark Pizza Background -->
+                <img id="hero-bg" src="https://images.unsplash.com/photo-1574126154517-d1e0d89e7344?q=80&w=2590&auto=format&fit=crop" 
+                     alt="Neapolitan Pizza Oven" 
+                     class="w-full h-full object-cover opacity-40 scale-110">
+            </div>
+
+            <div class="relative z-20 text-center px-4 max-w-5xl">
+                <p class="hero-anim text-posto-red font-sans text-sm md:text-base tracking-[0.3em] uppercase mb-4 font-bold">Est. 2025 • Napoli, Italia</p>
+                <h1 class="hero-anim text-6xl md:text-9xl font-serif text-posto-cream leading-[0.9] mb-8">
+                    Taste the <br>
+                    <span class="italic text-transparent bg-clip-text bg-gradient-to-r from-posto-orange to-posto-red">Inferno.</span>
+                </h1>
+                <div class="hero-anim flex flex-col md:flex-row gap-6 justify-center items-center mt-8">
+                    <button onclick="document.getElementById('menu').scrollIntoView({behavior: 'smooth'})" class="group px-8 py-4 border border-posto-cream/30 hover:border-posto-red rounded-full transition-all duration-300 hover:bg-posto-red/10">
+                        <span class="font-sans text-sm tracking-widest uppercase group-hover:text-white">View Full Menu</span>
+                    </button>
+                    <div class="h-[1px] w-12 bg-posto-cream/30 hidden md:block"></div>
+                    <p class="font-sans text-sm text-posto-cream/60">Wood Fired &bull; 48h Fermentation &bull; DOP Ingredients</p>
+                </div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-60">
+                <span class="text-[10px] uppercase tracking-widest text-posto-cream">Scroll</span>
+                <div class="w-[1px] h-12 bg-gradient-to-b from-posto-cream to-transparent"></div>
+            </div>
+        </section>
+
+        <!-- INTRODUCTION / STORY -->
+        <section id="story" class="py-24 md:py-32 px-6 bg-posto-black relative z-10">
+            <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+                <div class="order-2 md:order-1 relative">
+                    <div class="relative z-10 reveal-container overflow-hidden rounded-lg">
+                        <img src="https://images.unsplash.com/photo-1517244683847-7456b63c5969?q=80&w=1000&auto=format&fit=crop" 
+                             alt="Chef making dough" 
+                             class="w-full h-[600px] object-cover hover:scale-105 transition-transform duration-700 ease-out reveal-img">
+                    </div>
+                    <!-- Decorative Element -->
+                    <div class="absolute -bottom-10 -right-10 w-40 h-40 border border-posto-red/30 rounded-full animate-float hidden md:block"></div>
+                    <div class="absolute -top-10 -left-10 text-[120px] font-serif text-posto-charcoal opacity-40 leading-none select-none">01</div>
+                </div>
+
+                <div class="order-1 md:order-2 space-y-8 scroll-text-trigger">
+                    <h2 class="text-4xl md:text-6xl font-serif leading-tight">
+                        Not just pizza. <br>
+                        <span class="text-posto-red italic">An Obsession.</span>
+                    </h2>
+                    <p class="text-posto-cream/70 text-lg font-sans leading-relaxed">
+                        We don't believe in shortcuts. Our dough is fermented for 48 hours using wild yeast from Ischia. Our tomatoes grow in the volcanic soil of Mount Vesuvius. Our oven was built brick-by-brick by artisans in Naples.
+                    </p>
+                    <p class="text-posto-cream/70 text-lg font-sans leading-relaxed">
+                        At Pizza Posto, we honor the tradition of the <span class="text-white italic font-serif">Pizzaiuolo</span>. Simple ingredients, intense heat, and perfect timing.
+                    </p>
+                    <div class="pt-4 flex gap-4">
+                        <div class="flex flex-col">
+                            <span class="text-3xl font-serif text-posto-orange">900°F</span>
+                            <span class="text-xs uppercase tracking-widest text-posto-cream/50">Oven Heat</span>
+                        </div>
+                        <div class="w-[1px] bg-white/10"></div>
+                        <div class="flex flex-col">
+                            <span class="text-3xl font-serif text-posto-orange">60s</span>
+                            <span class="text-xs uppercase tracking-widest text-posto-cream/50">Cook Time</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MENU SECTION -->
+        <section id="menu" class="py-24 bg-posto-dark relative overflow-hidden">
+            <!-- Background Detail -->
+            <div class="absolute top-0 right-0 w-1/2 h-full bg-posto-charcoal/30 blur-3xl rounded-l-full pointer-events-none"></div>
+
+            <div class="max-w-7xl mx-auto px-6 relative z-10">
+                <div class="text-center mb-20 space-y-4">
+                    <span class="text-posto-red text-sm tracking-[0.3em] uppercase font-bold">The Classics</span>
+                    <h2 class="text-5xl md:text-7xl font-serif">Selected Menu</h2>
+                </div>
+
+                <!-- Pizza Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+                    
+                    <!-- Card 1 -->
+                    <div class="menu-card group cursor-pointer perspective-1000">
+                        <div class="relative bg-posto-charcoal p-8 rounded-2xl border border-white/5 hover:border-posto-red/30 transition-all duration-500 h-full transform-style-3d group-hover:-translate-y-2">
+                            <!-- Floating Tag -->
+                            <div class="absolute top-4 right-4 bg-posto-red/20 text-posto-red text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Hot</div>
+                            
+                            <!-- Image Container -->
+                            <div class="relative w-full aspect-square mb-6 overflow-visible flex justify-center items-center">
+                                <div class="absolute inset-0 bg-posto-orange/20 blur-[50px] rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500"></div>
+                                <img src="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?q=80&w=500&auto=format&fit=crop" 
+                                     alt="Margherita" 
+                                     class="w-64 h-64 object-cover rounded-full shadow-2xl transition-transform duration-700 ease-out group-hover:rotate-[20deg] group-hover:scale-110 z-10 relative">
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="space-y-3 relative z-10">
+                                <div class="flex justify-between items-baseline">
+                                    <h3 class="text-2xl font-serif">Margherita DOP</h3>
+                                    <span class="text-xl font-sans text-posto-orange">$16</span>
+                                </div>
+                                <p class="text-posto-cream/60 text-sm leading-relaxed">
+                                    San Marzano tomato, buffalo mozzarella, fresh basil, extra virgin olive oil. The Queen of pizzas.
+                                </p>
+                                <div class="pt-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                    <button class="text-xs uppercase tracking-widest font-bold border-b border-posto-red pb-1 hover:text-posto-red transition-colors">Add to Order</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div class="menu-card group cursor-pointer perspective-1000">
+                        <div class="relative bg-posto-charcoal p-8 rounded-2xl border border-white/5 hover:border-posto-red/30 transition-all duration-500 h-full transform-style-3d group-hover:-translate-y-2">
+                             <div class="relative w-full aspect-square mb-6 overflow-visible flex justify-center items-center">
+                                <div class="absolute inset-0 bg-posto-orange/20 blur-[50px] rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500"></div>
+                                <img src="https://images.unsplash.com/photo-1628840042765-356cda07504e?q=80&w=500&auto=format&fit=crop" 
+                                     alt="Diavola" 
+                                     class="w-64 h-64 object-cover rounded-full shadow-2xl transition-transform duration-700 ease-out group-hover:rotate-[20deg] group-hover:scale-110 z-10 relative">
+                            </div>
+                            
+                            <div class="space-y-3 relative z-10">
+                                <div class="flex justify-between items-baseline">
+                                    <h3 class="text-2xl font-serif">Diavola</h3>
+                                    <span class="text-xl font-sans text-posto-orange">$19</span>
+                                </div>
+                                <p class="text-posto-cream/60 text-sm leading-relaxed">
+                                    Spicy Calabrian salami, fior di latte, tomato sauce, chili flakes, honey drizzle.
+                                </p>
+                                <div class="pt-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                    <button class="text-xs uppercase tracking-widest font-bold border-b border-posto-red pb-1 hover:text-posto-red transition-colors">Add to Order</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div class="menu-card group cursor-pointer perspective-1000">
+                        <div class="relative bg-posto-charcoal p-8 rounded-2xl border border-white/5 hover:border-posto-red/30 transition-all duration-500 h-full transform-style-3d group-hover:-translate-y-2">
+                            <div class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">New</div>
+
+                             <div class="relative w-full aspect-square mb-6 overflow-visible flex justify-center items-center">
+                                <div class="absolute inset-0 bg-posto-orange/20 blur-[50px] rounded-full opacity-0 group-hover:opacity-60 transition-opacity duration-500"></div>
+                                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=500&auto=format&fit=crop" 
+                                     alt="Tartufo" 
+                                     class="w-64 h-64 object-cover rounded-full shadow-2xl transition-transform duration-700 ease-out group-hover:rotate-[20deg] group-hover:scale-110 z-10 relative">
+                            </div>
+                            
+                            <div class="space-y-3 relative z-10">
+                                <div class="flex justify-between items-baseline">
+                                    <h3 class="text-2xl font-serif">Tartufo</h3>
+                                    <span class="text-xl font-sans text-posto-orange">$22</span>
+                                </div>
+                                <p class="text-posto-cream/60 text-sm leading-relaxed">
+                                    Black truffle cream, wild mushrooms, thyme, mozzarella, parmesan shavings.
+                                </p>
+                                <div class="pt-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                    <button class="text-xs uppercase tracking-widest font-bold border-b border-posto-red pb-1 hover:text-posto-red transition-colors">Add to Order</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="mt-16 text-center">
+                    <a href="#" class="inline-flex items-center gap-2 text-posto-cream hover:text-posto-red transition-colors font-serif italic text-lg group">
+                        View Full Menu <i data-lucide="arrow-right" class="group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIDEO PARALLAX BREAK -->
+        <section class="relative h-[60vh] md:h-[80vh] w-full overflow-hidden flex items-center justify-center">
+            <div class="absolute inset-0 bg-black/60 z-10"></div>
+            <!-- Simulating Video with Parallax Image for Perf -->
+            <div class="absolute inset-0 z-0 bg-fixed bg-center bg-cover" style="background-image: url('https://images.unsplash.com/photo-1595707678586-583eb723049b?q=80&w=2600&auto=format&fit=crop');"></div>
+            
+            <div class="relative z-20 text-center max-w-4xl px-6">
+                 <h2 class="text-5xl md:text-8xl font-serif text-outline opacity-80 cursor-default">
+                    HAND KNEADED
+                </h2>
+                <h2 class="text-5xl md:text-8xl font-serif text-white mt-[-20px] md:mt-[-40px]">
+                    WOOD FIRED
+                </h2>
+            </div>
+        </section>
+
+        <!-- RESERVATIONS -->
+        <section id="reservations" class="py-24 bg-posto-black px-6">
+            <div class="max-w-4xl mx-auto border border-white/10 rounded-3xl p-8 md:p-16 bg-posto-dark relative overflow-hidden">
+                <!-- Abstract Bg Shape -->
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-posto-red/10 rounded-full blur-[80px]"></div>
+
+                <div class="relative z-10 text-center space-y-8">
+                    <h2 class="text-4xl md:text-5xl font-serif">Reserve Your Table</h2>
+                    <p class="text-posto-cream/60">Experience the heat of Naples. Reservations recommended for dinner service.</p>
+                    
+                    <form class="space-y-6 max-w-md mx-auto" onsubmit="event.preventDefault(); showToast();">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1 text-left">
+                                <label class="text-xs uppercase tracking-widest text-posto-cream/40">Date</label>
+                                <input type="date" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-posto-red transition-colors">
+                            </div>
+                            <div class="space-y-1 text-left">
+                                <label class="text-xs uppercase tracking-widest text-posto-cream/40">Guests</label>
+                                <select class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-posto-red transition-colors appearance-none">
+                                    <option class="text-black">2 People</option>
+                                    <option class="text-black">3 People</option>
+                                    <option class="text-black">4 People</option>
+                                    <option class="text-black">5+ People</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-1 text-left">
+                            <label class="text-xs uppercase tracking-widest text-posto-cream/40">Name</label>
+                            <input type="text" placeholder="Your Name" class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-posto-red transition-colors">
+                        </div>
+                        <button type="submit" class="w-full bg-posto-red text-white font-bold uppercase tracking-widest py-4 rounded-lg hover:bg-red-700 transition-colors transform hover:scale-[1.02] duration-200 shadow-lg shadow-red-900/20">
+                            Confirm Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-posto-black pt-24 pb-12 border-t border-white/5 relative z-10">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+            <div class="col-span-1 md:col-span-2 space-y-6">
+                <a href="#" class="font-serif text-3xl font-bold">PIZZA POSTO.</a>
+                <p class="text-posto-cream/50 max-w-xs font-sans">
+                    Authentic Neapolitan pizza made with passion, fire, and time.
+                </p>
+                <div class="flex gap-4 text-posto-cream/70">
+                    <i data-lucide="instagram" class="w-5 h-5 hover:text-posto-red cursor-pointer transition-colors"></i>
+                    <i data-lucide="facebook" class="w-5 h-5 hover:text-posto-red cursor-pointer transition-colors"></i>
+                    <i data-lucide="twitter" class="w-5 h-5 hover:text-posto-red cursor-pointer transition-colors"></i>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <h4 class="font-serif text-xl text-posto-cream">Location</h4>
+                <address class="not-italic text-posto-cream/50 font-sans space-y-2">
+                    123 Ember Lane<br>
+                    Downtown District<br>
+                    City, ST 90210
+                </address>
+            </div>
+
+            <div class="space-y-4">
+                <h4 class="font-serif text-xl text-posto-cream">Hours</h4>
+                <ul class="text-posto-cream/50 font-sans space-y-2">
+                    <li class="flex justify-between"><span>Tue - Thu</span> <span>5pm - 10pm</span></li>
+                    <li class="flex justify-between"><span>Fri - Sat</span> <span>5pm - 11pm</span></li>
+                    <li class="flex justify-between"><span>Sun</span> <span>4pm - 9pm</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-posto-cream/30 uppercase tracking-widest">
+            <p>&copy; 2025 Pizza Posto. All rights reserved.</p>
+            <p>Designed by Gemini Creative</p>
+        </div>
+    </footer>
+
+    <!-- Custom Toast UI -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-posto-cream text-posto-black px-8 py-4 rounded-full shadow-2xl transform translate-y-24 opacity-0 transition-all duration-500 z-50 flex items-center gap-3">
+        <div class="bg-green-500 rounded-full p-1"><i data-lucide="check" class="w-3 h-3 text-white"></i></div>
+        <span class="font-bold text-sm tracking-wide">Table Request Sent!</span>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // --------------------------------------------------
+        // FIRE EMBER CANVAS EFFECT
+        // --------------------------------------------------
+        const canvas = document.getElementById('fireCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + Math.random() * 100;
+                this.vx = (Math.random() - 0.5) * 1;
+                this.vy = -(Math.random() * 2 + 1);
+                this.size = Math.random() * 2 + 1;
+                this.life = Math.random() * 0.5 + 0.5; // opacity
+                this.decay = Math.random() * 0.005 + 0.002;
+                this.color = Math.random() > 0.5 ? '214, 52, 40' : '232, 106, 51'; // Posto Red or Orange
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                
+                // Wind effect
+                this.x += Math.sin(this.y * 0.01) * 0.5;
+
+                if (this.life <= 0 || this.y < 0) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color}, ${this.life})`;
+                ctx.fill();
+                
+                // Glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = `rgba(${this.color}, 0.5)`;
+            }
+        }
+
+        function initParticles() {
+            resize();
+            particles = [];
+            for(let i = 0; i < 70; i++) {
+                particles.push(new Particle());
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resize);
+        window.addEventListener('load', initParticles);
+
+
+        // --------------------------------------------------
+        // GSAP ANIMATIONS
+        // --------------------------------------------------
+        gsap.registerPlugin(ScrollTrigger);
+
+        // 1. Loader Sequence
+        const tl = gsap.timeline();
+
+        tl.to(".loader-text", {
+            y: 0,
+            duration: 1,
+            ease: "power4.out",
+            stagger: 0.1
+        })
+        .to(".loader-line", {
+            width: "100%",
+            duration: 1.2,
+            ease: "power2.inOut"
+        }, "-=0.5")
+        .to(".loader-text", {
+            y: "-150%",
+            duration: 0.8,
+            ease: "power2.in",
+            delay: 0.5
+        })
+        .to(".loader-overlay", {
+            y: "-100%",
+            duration: 1,
+            ease: "expo.inOut"
+        })
+        .from(".hero-anim", {
+            y: 50,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.1,
+            ease: "power3.out"
+        }, "-=0.5");
+
+        // 2. Parallax Hero Background
+        gsap.to("#hero-bg", {
+            scrollTrigger: {
+                trigger: "body",
+                start: "top top",
+                end: "bottom top",
+                scrub: true
+            },
+            y: 200,
+            scale: 1.2
+        });
+
+        // 3. Navbar Reveal
+        gsap.from("#navbar", {
+            y: -100,
+            opacity: 0,
+            duration: 1,
+            delay: 3,
+            ease: "power3.out"
+        });
+
+        // 4. Story Section Images
+        gsap.utils.toArray('.reveal-container').forEach(container => {
+            ScrollTrigger.create({
+                trigger: container,
+                start: "top 80%",
+                onEnter: () => {
+                    container.style.clipPath = "inset(0 0 0 0)";
+                }
+            });
+        });
+        
+        // Story Text Stagger
+        gsap.from(".scroll-text-trigger > *", {
+            scrollTrigger: {
+                trigger: "#story",
+                start: "top 70%",
+            },
+            y: 30,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.1,
+            ease: "power3.out"
+        });
+
+        // 5. Menu Cards
+        gsap.from(".menu-card", {
+            scrollTrigger: {
+                trigger: "#menu",
+                start: "top 75%",
+            },
+            y: 100,
+            opacity: 0,
+            duration: 1,
+            stagger: 0.15,
+            ease: "back.out(1.2)"
+        });
+
+        // --------------------------------------------------
+        // CUSTOM CURSOR LOGIC
+        // --------------------------------------------------
+        const cursor = document.querySelector('.cursor-dot');
+        const links = document.querySelectorAll('a, button, .menu-card');
+
+        document.addEventListener('mousemove', (e) => {
+            gsap.to(cursor, {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.1,
+                ease: "power2.out"
+            });
+        });
+
+        links.forEach(link => {
+            link.addEventListener('mouseenter', () => {
+                gsap.to(cursor, { scale: 3, duration: 0.3 });
+            });
+            link.addEventListener('mouseleave', () => {
+                gsap.to(cursor, { scale: 1, duration: 0.3 });
+            });
+        });
+
+        // --------------------------------------------------
+        // UTILITIES
+        // --------------------------------------------------
+        
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
